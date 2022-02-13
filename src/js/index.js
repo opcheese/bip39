@@ -2297,7 +2297,6 @@
             },
         },
         {
-            {
             name: "BTC - Bitcoin Testnet",
             onSelect: function() {
                 network = libs.bitcoin.networks.testnet;
