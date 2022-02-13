@@ -2359,7 +2359,7 @@
                 network = libs.bitcoin.networks.bitcoin;
                 setHdCoin(60);
             },
-          },
+        },
         {
             name: "LTC - Litecoin",
             onSelect: function() {
@@ -2376,6 +2376,13 @@
         //        DOM.litecoinLtubContainer.removeClass("hidden");
         //    },
         //},
+        {
+            name: "SOL - Solana",
+            onSelect: function() {
+                network = libs.bitcoin.networks.solana;
+                setHdCoin(501);
+            },
+        },
         {
             name: "TRX - Tron",
             onSelect: function() {
