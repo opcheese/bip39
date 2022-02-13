@@ -2296,13 +2296,13 @@
                 setHdCoin(0);
             },
         },
-        {
-            name: "BTC - Bitcoin Testnet",
-            onSelect: function() {
-                network = libs.bitcoin.networks.testnet;
-                setHdCoin(1);
-            },
-        },
+        //{
+        //    name: "BTC - Bitcoin Testnet",
+        //    onSelect: function() {
+        //        network = libs.bitcoin.networks.testnet;
+        //        setHdCoin(1);
+        //    },
+        //},
         {
             name: "BSC - Binance Smart Chain",
             onSelect: function() {
@@ -2310,13 +2310,13 @@
                 setHdCoin(60);
             },
         },
-        {
-            name: "BSV - BitcoinSV",
-            onSelect: function() {
-                network = libs.bitcoin.networks.bitcoinsv;
-                setHdCoin(236);
-            },
-        },
+        //{
+        //    name: "BSV - BitcoinSV",
+        //    onSelect: function() {
+        //        network = libs.bitcoin.networks.bitcoinsv;
+        //        setHdCoin(236);
+        //    },
+        //},
         {
             name: "DASH - Dash",
             onSelect: function() {
@@ -2324,13 +2324,13 @@
                 setHdCoin(5);
             },
         },
-        {
-            name: "DASH - Dash Testnet",
-            onSelect: function() {
-                network = libs.bitcoin.networks.dashtn;
-                setHdCoin(1);
-            },
-        },
+        //{
+        //    name: "DASH - Dash Testnet",
+        //    onSelect: function() {
+        //        network = libs.bitcoin.networks.dashtn;
+        //        setHdCoin(1);
+        //    },
+        //},
         {
             name: "DOGE - Dogecoin",
             onSelect: function() {
@@ -2338,13 +2338,13 @@
                 setHdCoin(3);
             },
         },
-        {
-            name: "DOGEt - Dogecoin Testnet",
-            onSelect: function() {
-                network = libs.bitcoin.networks.dogecointestnet;
-                setHdCoin(1);
-            },
-        },
+        //{
+        //    name: "DOGEt - Dogecoin Testnet",
+        //    onSelect: function() {
+        //        network = libs.bitcoin.networks.dogecointestnet;
+        //        setHdCoin(1);
+        //    },
+        //},
         {
             name: "ETC - Ethereum Classic",
             segwitAvailable: false,
@@ -2368,14 +2368,14 @@
                 DOM.litecoinLtubContainer.removeClass("hidden");
             },
         },
-        {
-            name: "LTCt - Litecoin Testnet",
-            onSelect: function() {
-                network = libs.bitcoin.networks.litecointestnet;
-                setHdCoin(1);
-                DOM.litecoinLtubContainer.removeClass("hidden");
-            },
-        },
+        //{
+        //    name: "LTCt - Litecoin Testnet",
+        //    onSelect: function() {
+        //        network = libs.bitcoin.networks.litecointestnet;
+        //        setHdCoin(1);
+        //        DOM.litecoinLtubContainer.removeClass("hidden");
+        //    },
+        //},
         {
             name: "TRX - Tron",
             onSelect: function() {
