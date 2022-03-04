@@ -1494,6 +1494,20 @@
                   pubkey = CosmosBufferToPublic(keyPair.getPublicKeyBuffer(), hrp);
                   privkey = keyPair.d.toBuffer().toString("base64");
                 }
+                if (networks[DOM.network.val()].name == "AVAX - Avalanche X-Chain") {
+                    const hrp = "avax";
+                    const chainId = "X";
+                    address = AvalancheXBufferToAddress(keyPair.getPublicKeyBuffer(), hrp, chainId);
+                    pubkey = AvalancheXBufferToPublic(keyPair.getPublicKeyBuffer());
+                    privkey = AvalancheXBufferToPrivate(keyPair.d.toBuffer());
+                }
+                if (networks[DOM.network.val()].name == "AVAX - Avalanche X-Chain Fuji testnet") {
+                    const hrp = "fuji";
+                    const chainId = "X";
+                    address = AvalancheXBufferToAddress(keyPair.getPublicKeyBuffer(), hrp, chainId);
+                    pubkey = AvalancheXBufferToPublic(keyPair.getPublicKeyBuffer());
+                    privkey = AvalancheXBufferToPrivate(keyPair.d.toBuffer());
+                }
 
               //Groestlcoin Addresses are different
                 if(isGRS()) {
@@ -2337,6 +2351,20 @@
                 network = libs.bitcoin.networks.anon;
                 setHdCoin(220);
             },
+        },
+        {
+            name: "AVAX - Avalanche X-Chain",
+            onSelect: function() {
+                network = libs.bitcoin.networks.bitcoin;
+                setHdCoin(9000);
+            }
+        },
+        {
+            name: "AVAX - Avalanche X-Chain Fuji testnet",
+            onSelect: function() {
+                network = libs.bitcoin.networks.bitcoin;
+                setHdCoin(9000);
+            }
         },
         {
             name: "BOLI - Bolivarcoin",
