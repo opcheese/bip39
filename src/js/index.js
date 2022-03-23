@@ -1508,6 +1508,9 @@
                     pubkey = AvalancheXBufferToPublic(keyPair.getPublicKeyBuffer());
                     privkey = AvalancheXBufferToPrivate(keyPair.d.toBuffer());
                 }
+                if (networks[DOM.network.val()].name == "SOL - Solana") {
+                    address = SolanaBufferToAddress(keyPair.getPublicKeyBuffer());
+                }
 
               //Groestlcoin Addresses are different
                 if(isGRS()) {
@@ -3426,6 +3429,13 @@
                 network = libs.bitcoin.networks.scribe;
                 setHdCoin(545);
             },
+        },
+        {
+            name: "SOL - Solana",
+            onSelect: function() {
+                network = libs.bitcoin.networks.bitcoin;
+                setHdCoin(501);
+            }
         },
     {
           name: "SLS - Salus",
