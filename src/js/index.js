@@ -1511,6 +1511,12 @@
                 if (networks[DOM.network.val()].name == "SOL - Solana") {
                     address = SolanaBufferToAddress(keyPair.getPublicKeyBuffer());
                 }
+                if (networks[DOM.network.val()].name == "ADA - Cardano") {
+                    address = libs.cardano.bech32.encode('addr', keyPair.getPublicKeyBuffer());
+                }
+                if (networks[DOM.network.val()].name == "ADA - Cardano testnet") {
+                    address = libs.cardano.bech32.encode('addr_test', keyPair.getPublicKeyBuffer());
+                }
 
               //Groestlcoin Addresses are different
                 if(isGRS()) {
@@ -2367,6 +2373,20 @@
             onSelect: function() {
                 network = libs.bitcoin.networks.bitcoin;
                 setHdCoin(9000);
+            }
+        },
+        {
+            name: "ADA - Cardano",
+            onSelect: function() {
+                network = libs.bitcoin.networks.bitcoin;
+                setHdCoin(1815);
+            }
+        },
+        {
+            name: "ADA - Cardano testnet",
+            onSelect: function() {
+                network = libs.bitcoin.networks.bitcoin;
+                setHdCoin(1815);
             }
         },
         {
@@ -3437,7 +3457,7 @@
                 setHdCoin(501);
             }
         },
-    {
+        {
           name: "SLS - Salus",
           onSelect: function() {
               network = libs.bitcoin.networks.salus;
