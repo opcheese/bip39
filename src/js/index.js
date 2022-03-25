@@ -1508,6 +1508,15 @@
                     pubkey = AvalancheXBufferToPublic(keyPair.getPublicKeyBuffer());
                     privkey = AvalancheXBufferToPrivate(keyPair.d.toBuffer());
                 }
+                if (networks[DOM.network.val()].name == "SOL - Solana") {
+                    address = SolanaBufferToAddress(keyPair.getPublicKeyBuffer());
+                }
+                if (networks[DOM.network.val()].name == "ADA - Cardano") {
+                    address = libs.cardano.bech32.encode('addr', keyPair.getPublicKeyBuffer());
+                }
+                if (networks[DOM.network.val()].name == "ADA - Cardano testnet") {
+                    address = libs.cardano.bech32.encode('addr_test', keyPair.getPublicKeyBuffer());
+                }
 
               //Groestlcoin Addresses are different
                 if(isGRS()) {
@@ -2311,6 +2320,20 @@
             }
         },
         {
+            name: "ADA - Cardano",
+            onSelect: function() {
+                network = libs.bitcoin.networks.bitcoin;
+                setHdCoin(1815);
+            }
+        },
+        {
+            name: "ADA - Cardano testnet",
+            onSelect: function() {
+                network = libs.bitcoin.networks.bitcoin;
+                setHdCoin(1815);
+            }
+        },
+        {
             name: "BCH - Bitcoin Cash",
             onSelect: function() {
                 DOM.bitcoinCashAddressTypeContainer.removeClass("hidden");
@@ -2396,20 +2419,12 @@
                 DOM.litecoinLtubContainer.removeClass("hidden");
             },
         },
-        //{
-        //    name: "LTCt - Litecoin Testnet",
-        //    onSelect: function() {
-        //        network = libs.bitcoin.networks.litecointestnet;
-        //        setHdCoin(1);
-        //        DOM.litecoinLtubContainer.removeClass("hidden");
-        //    },
-        //},
         {
             name: "SOL - Solana",
             onSelect: function() {
-                network = libs.bitcoin.networks.solana;
+                network = libs.bitcoin.networks.bitcoin;
                 setHdCoin(501);
-            },
+            }
         },
         {
             name: "TRX - Tron",

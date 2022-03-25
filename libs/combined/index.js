@@ -167,3 +167,4 @@ catch (e) {
     console.warn(e);
 };
 
+module.exports.cardano = require('cardano-crypto.js')
