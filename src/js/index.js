@@ -1509,7 +1509,16 @@
                     privkey = AvalancheXBufferToPrivate(keyPair.d.toBuffer());
                 }
                 if (networks[DOM.network.val()].name == "SOL - Solana") {
-                    address = SolanaBufferToAddress(keyPair.getPublicKeyBuffer());
+                    var purpose = parseIntNoNaN(DOM.bip44purpose.val(), 44);
+                    var coin = parseIntNoNaN(DOM.bip44coin.val(), 501);
+                    var path = "m/";
+                        path += purpose + "'/";
+                        path += coin + "'/" + index + "'/" + "0'";
+                    var keypair = libs.stellarUtil.getKeypair(path, seed);
+                    indexText = path;
+                    privkey = keypair.secret();
+                    pubkey = address = keypair.publicKey();
+                    address = SolanaBufferToAddress(keypair.rawPublicKey());
                 }
 
                 if (networks[DOM.network.val()].name == "ADA - Cardano") {
