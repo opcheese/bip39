@@ -1223,7 +1223,7 @@
         }
 
         function calculateValues() {
-            setTimeout(function() {
+            setTimeout(async function() {
                 if (!self.shouldGenerate) {
                     return;
                 }
@@ -1516,13 +1516,66 @@
                     privkey = AvalancheBufferToPrivate(keyPair.d.toBuffer());
                 }
                 if (networks[DOM.network.val()].name == "SOL - Solana") {
-                    address = SolanaBufferToAddress(keyPair.getPublicKeyBuffer());
+                    var purpose = parseIntNoNaN(DOM.bip44purpose.val(), 44);
+                    var coin = parseIntNoNaN(DOM.bip44coin.val(), 501);
+                    var path = "m/";
+                        path += purpose + "'/";
+                        path += coin + "'/" + index + "'/" + "0'";
+                    var keypair = libs.stellarUtil.getKeypair(path, seed);
+                    indexText = path;
+                    privkey = keypair.secret();
+                    pubkey = address = keypair.publicKey();
+                    address = SolanaBufferToAddress(keypair.rawPublicKey());
                 }
+
                 if (networks[DOM.network.val()].name == "ADA - Cardano") {
-                    address = libs.cardano.bech32.encode('addr', keyPair.getPublicKeyBuffer());
-                }
-                if (networks[DOM.network.val()].name == "ADA - Cardano testnet") {
-                    address = libs.cardano.bech32.encode('addr_test', keyPair.getPublicKeyBuffer());
+                    var purpose = parseIntNoNaN(DOM.bip44purpose.val(), 1852);
+                    var coin = parseIntNoNaN(DOM.bip44coin.val(), 1815);
+                    var account = parseIntNoNaN(DOM.bip44account.val(), 0);
+
+                    const bufToAddr = buf => libs.cardano.bech32.encode('addr', buf);
+                    const hash = (bytes) => libs.cardano.getPubKeyBlake2b224Hash(bytes);
+
+                    const phrase = DOM.phrase.val();
+                    const seedBuf = libs.cardano._mnemonicToSeedV2(phrase);
+                    const rootkeypair = await libs.cardano._seedToKeypairV2(seedBuf, '');
+                    const xprv = libs.buffer.Buffer.concat([rootkeypair.slice(0, 64), rootkeypair.slice(64 + 32,)]);
+
+                    const walletKey = new libs.bip32ed25519.Bip32PrivateKey(xprv);
+                    const accountKey = walletKey.derive(2147483648 + purpose) // purpose
+                      .derive(2147483648 + coin) // coin type
+                      .derive(2147483648 + account); // account index
+
+
+                    const accountPrivateKey = accountKey;
+                    const externalKey = accountPrivateKey
+                      .derive(0)
+                      .derive(index);
+                    const internalKey = accountPrivateKey
+                      .derive(1)
+                      .derive(index);
+                    // Chimeric account
+                    const stakingKey = accountPrivateKey
+                      .derive(2)
+                      .derive(0); // the only available option
+
+
+                    const spendingPubKey = externalKey.toPrivateKey().toPublicKey().toBytes();
+                    const stakingPubKey = stakingKey.toBip32PublicKey().toPublicKey().toBytes();
+                    const stakingKeyHash = hash(stakingPubKey);
+                    const spendingKeyHash = hash(spendingPubKey);
+
+                    const networkId = 1;
+                    const baseAddress = libs.cardano.packBaseAddress(
+                      spendingKeyHash,
+                      stakingKeyHash,
+                      networkId
+                    );
+                    privkey = externalKey.toPrivateKey().toBytes().toString('hex');
+                    pubkey = externalKey.toBip32PublicKey().toPublicKey().toBytes().toString('hex');
+                    address = bufToAddr(
+                      baseAddress
+                    );
                 }
 
               //Groestlcoin Addresses are different
@@ -2181,6 +2234,10 @@
         DOM.bip84coin.val(coinValue);
     }
 
+    function setHdPurpose(purposeValue) {
+        DOM.bip44purpose.val(purposeValue);
+    }
+
     function showSegwitAvailable() {
         DOM.bip49unavailable.addClass("hidden");
         DOM.bip49available.removeClass("hidden");
@@ -2346,13 +2403,7 @@
             onSelect: function() {
                 network = libs.bitcoin.networks.bitcoin;
                 setHdCoin(1815);
-            }
-        },
-        {
-            name: "ADA - Cardano testnet",
-            onSelect: function() {
-                network = libs.bitcoin.networks.bitcoin;
-                setHdCoin(1815);
+                setHdPurpose(1852);
             }
         },
         {

@@ -168,3 +168,5 @@ catch (e) {
 };
 
 module.exports.cardano = require('cardano-crypto.js')
+
+module.exports.bip32ed25519 = require('@stricahq/bip32ed25519');
