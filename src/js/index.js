@@ -214,6 +214,7 @@
         DOM.bitcoinCashAddressTypeContainer.addClass("hidden");
         var networkIndex = e.target.value;
         var network = networks[networkIndex];
+        setHdPurpose(44);
         network.onSelect();
         adjustNetworkForSegwit();
         if (seed != null) {
@@ -231,6 +232,7 @@
         }
         else {
             DOM.bip32path.prop("readonly", true);
+            setHdPurpose(44);
             clients[clientIndex].onSelect();
             rootKeyChanged();
         }
