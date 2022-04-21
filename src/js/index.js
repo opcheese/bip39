@@ -2498,6 +2498,13 @@
                 DOM.litecoinLtubContainer.removeClass("hidden");
             },
         },
+	{
+            name: "LUNA - Terra",
+            onSelect: function() {
+                network = libs.bitcoin.networks.bitcoin;
+                setHdCoin(330);
+            },
+        },
         {
             name: "MATIC - Polygon",
             onSelect: function() {
