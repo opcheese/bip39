@@ -1603,6 +1603,9 @@
                     pubkey = elaAddress.publicKey;
                 }
 
+                if (!self.shouldGenerate) {
+                    return;
+                }
                 addAddressToList(indexText, address, pubkey, privkey);
                 if (isLast) {
                     hidePending();
