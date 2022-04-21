@@ -2196,6 +2196,7 @@
                     || (name == "ERE - EtherCore")
                     || (name == "BSC - Binance Smart Chain")
                     || (name == "AVAX - Avalanche C-Chain")
+                    || (name == "MATIC - Polygon")
     }
 
     function networkIsRsk() {
@@ -2496,6 +2497,13 @@
                 setHdCoin(2);
                 DOM.litecoinLtubContainer.removeClass("hidden");
             },
+        },
+        {
+            name: "MATIC - Polygon",
+            onSelect: function() {
+                network = libs.bitcoin.networks.bitcoin;
+                setHdCoin(60);
+            }
         },
         {
             name: "SOL - Solana",
