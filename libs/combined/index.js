@@ -170,3 +170,11 @@ catch (e) {
 module.exports.cardano = require('cardano-crypto.js')
 
 module.exports.bip32ed25519 = require('@stricahq/bip32ed25519');
+
+module.exports.solanaUtil = {
+    getKeypair: function (path, seed) {
+        const { key, chainCode } = edHd.derivePath(path, seed);
+        const pubKey = edHd.getPublicKey(key);
+        return { key, pubKey, chainCode };
+    },
+}

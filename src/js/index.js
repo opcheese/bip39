@@ -1516,11 +1516,12 @@
                     var path = "m/";
                         path += purpose + "'/";
                         path += coin + "'/" + index + "'/" + "0'";
-                    var keypair = libs.stellarUtil.getKeypair(path, seed);
+                    var { key, pubKey } = libs.solanaUtil.getKeypair(path, seed);
+                    pubKey = pubKey.slice(1, 33);
                     indexText = path;
-                    privkey = keypair.secret();
-                    pubkey = address = keypair.publicKey();
-                    address = SolanaBufferToAddress(keypair.rawPublicKey());
+                    privkey = libs.bs58.encode(libs.buffer.Buffer.concat([key, pubKey]));
+                    pubkey = pubKey.toString('hex');
+                    address = SolanaBufferToAddress(pubKey);
                 }
 
                 if (networks[DOM.network.val()].name == "ADA - Cardano") {
