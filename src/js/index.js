@@ -1567,8 +1567,8 @@
                       stakingKeyHash,
                       networkId
                     );
-                    privkey = externalKey.toPrivateKey().toBytes().toString('hex');
-                    pubkey = externalKey.toBip32PublicKey().toPublicKey().toBytes().toString('hex');
+                    privkey = externalKey.toPrivateKey().toBytes().toString('hex') + ';' + stakingKey.toPrivateKey().toBytes().toString('hex');
+                    pubkey = externalKey.toBip32PublicKey().toPublicKey().toBytes().toString('hex') + ';' + stakingKey.toBip32PublicKey().toPublicKey().toBytes().toString('hex');
                     address = bufToAddr(
                       baseAddress
                     );
