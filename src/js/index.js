@@ -2281,11 +2281,22 @@
     }
 
     function lastIndexInTable() {
-        var pathText = DOM.addresses.find(".index").last().text();
-        var pathBits = pathText.split("/");
-        var lastBit = pathBits[pathBits.length-1];
-        var lastBitClean = lastBit.replace("'", "");
-        return parseInt(lastBitClean);
+        const extractBit = (path, index) => {
+            const pathBits = path.split('/');
+            const bit = pathBits[pathBits.length + index];
+            const bitClean = bit.replace("'", "");
+            return parseInt(bitClean);
+        }
+
+        var lastPathText = DOM.addresses.find(".index").last().text();
+        var precLastText = DOM.addresses.find(".index").eq(-2).text();
+        if (!precLastText) {
+            return extractBit(lastPathText, -1);
+        }
+        if (extractBit(lastPathText, -1) === extractBit(precLastText, -1)) {
+            return extractBit(lastPathText, -2);
+        }
+        return extractBit(lastPathText, -1);
     }
 
     function uint8ArrayToHex(a) {
