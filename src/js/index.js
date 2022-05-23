@@ -1523,11 +1523,12 @@
                     var path = "m/";
                         path += purpose + "'/";
                         path += coin + "'/" + index + "'/" + "0'";
-                    var keypair = libs.stellarUtil.getKeypair(path, seed);
+                    var { key, pubKey } = libs.solanaUtil.getKeypair(path, seed);
+                    pubKey = pubKey.slice(1, 33);
                     indexText = path;
-                    privkey = keypair.secret();
-                    pubkey = address = keypair.publicKey();
-                    address = SolanaBufferToAddress(keypair.rawPublicKey());
+                    privkey = libs.bs58.encode(libs.buffer.Buffer.concat([key, pubKey]));
+                    pubkey = pubKey.toString('hex');
+                    address = SolanaBufferToAddress(pubKey);
                 }
 
                 if (networks[DOM.network.val()].name == "ADA - Cardano") {
@@ -1573,8 +1574,8 @@
                       stakingKeyHash,
                       networkId
                     );
-                    privkey = externalKey.toPrivateKey().toBytes().toString('hex');
-                    pubkey = externalKey.toBip32PublicKey().toPublicKey().toBytes().toString('hex');
+                    privkey = externalKey.toPrivateKey().toBytes().toString('hex') + ';' + stakingKey.toPrivateKey().toBytes().toString('hex');
+                    pubkey = externalKey.toBip32PublicKey().toPublicKey().toBytes().toString('hex') + ';' + stakingKey.toBip32PublicKey().toPublicKey().toBytes().toString('hex');
                     address = bufToAddr(
                       baseAddress
                     );
@@ -2289,11 +2290,22 @@
     }
 
     function lastIndexInTable() {
-        var pathText = DOM.addresses.find(".index").last().text();
-        var pathBits = pathText.split("/");
-        var lastBit = pathBits[pathBits.length-1];
-        var lastBitClean = lastBit.replace("'", "");
-        return parseInt(lastBitClean);
+        const extractBit = (path, index) => {
+            const pathBits = path.split('/');
+            const bit = pathBits[pathBits.length + index];
+            const bitClean = bit.replace("'", "");
+            return parseInt(bitClean);
+        }
+
+        var lastPathText = DOM.addresses.find(".index").last().text();
+        var precLastText = DOM.addresses.find(".index").eq(-2).text();
+        if (!precLastText) {
+            return extractBit(lastPathText, -1);
+        }
+        if (extractBit(lastPathText, -1) === extractBit(precLastText, -1)) {
+            return extractBit(lastPathText, -2);
+        }
+        return extractBit(lastPathText, -1);
     }
 
     function uint8ArrayToHex(a) {
