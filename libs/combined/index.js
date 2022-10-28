@@ -35,8 +35,8 @@ module.exports.bip85 = require('bip85')
 module.exports.bitcoin = require('bitcoinjs-lib')
 
 /* buffer */
-
-module.exports.buffer = require('buffer');
+const buffer = require('buffer');
+module.exports.buffer = buffer;
 
 /* elastos */
 // See https://github.com/iancoleman/bip39/pull/368
@@ -167,9 +167,40 @@ catch (e) {
     console.warn(e);
 };
 
-module.exports.cardano = require('cardano-crypto.js')
+const Bip32Ed25519 = require('@stricahq/bip32ed25519')
+module.exports.bip32ed25519 = Bip32Ed25519;
 
-module.exports.bip32ed25519 = require('@stricahq/bip32ed25519');
+const cardano = require('cardano-crypto.js');
+
+module.exports.cardano = {
+    ...cardano,
+    getAccountExtendedPrivateKey: async function (phrase, purpose, coin, account) {
+        const seedBuf = cardano._mnemonicToSeedV2(phrase);
+        const rootkeypair = await cardano._seedToKeypairV2(seedBuf, '');
+        const xprv = buffer.Buffer.concat([rootkeypair.slice(0, 64), rootkeypair.slice(64 + 32,)]);
+
+        const walletKey = new Bip32Ed25519.Bip32PrivateKey(xprv);
+        // This magic constant is hardening key
+        const accountKey = walletKey.derive(2147483648 + purpose) // purpose
+            .derive(2147483648 + coin) // coin type
+            .derive(2147483648 + account); // account index
+        const xprvBytes = accountKey.toBytes();
+        return module.exports.bs58.encode(xprvBytes);
+    },
+    getAccountExtendedPublicKey: async function (phrase, purpose, coin, account) {
+        const seedBuf = cardano._mnemonicToSeedV2(phrase);
+        const rootkeypair = await cardano._seedToKeypairV2(seedBuf, '');
+        const xprv = buffer.Buffer.concat([rootkeypair.slice(0, 64), rootkeypair.slice(64 + 32,)]);
+
+        const walletKey = new Bip32Ed25519.Bip32PrivateKey(xprv);
+        // This magic constant is hardening key
+        const accountKey = walletKey.derive(2147483648 + purpose) // purpose
+            .derive(2147483648 + coin) // coin type
+            .derive(2147483648 + account); // account index
+        const xpubBytes = accountKey.toBip32PublicKey().toBytes();
+        return module.exports.bs58.encode(xpubBytes);
+    }
+}
 
 module.exports.solanaUtil = {
     getKeypair: function (path, seed) {

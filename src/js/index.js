@@ -15,6 +15,7 @@
     var showPrivKey = true;
     var showQr = false;
     var litecoinUseLtub = true;
+    var useRootKey = true;
 
     var entropyTypeAutoDetect = true;
     var entropyChangeTimeoutEvent = null;
@@ -26,9 +27,11 @@
 
     var DOM = {};
     DOM.privacyScreenToggle = $(".privacy-screen-toggle");
-    DOM.network = $(".network");
+    DOM.network = $("#mnemonic-code-converter-container .network");
+    DOM.network2 = $("#address-extended-private-key-container .network")
     DOM.bip32Client = $("#bip32-client");
     DOM.phraseNetwork = $("#network-phrase");
+    DOM.phraseNetwork2 = $("#network-phrase2");
     DOM.useEntropy = $(".use-entropy");
     DOM.entropyContainer = $(".entropy-container");
     DOM.entropy = $(".entropy");
@@ -58,6 +61,8 @@
     DOM.passphrase = $(".passphrase");
     DOM.generateContainer = $(".generate-container");
     DOM.generate = $(".generate");
+    DOM.switchToAddress = $(".switch-to-address");
+    DOM.switchToMnemonicCodeConverter = $(".switch-to-mnemonic-code-converter");
     DOM.seed = $(".seed");
     DOM.rootKey = $(".root-key");
     DOM.litecoinLtubContainer = $(".litecoin-ltub-container");
@@ -75,11 +80,16 @@
     DOM.bip32path = $("#bip32-path");
     DOM.bip44path = $("#bip44-path");
     DOM.bip44purpose = $("#bip44 .purpose");
+    DOM.bip44purpose2 = $("#address-extended-private-key-container .purpose");
     DOM.bip44coin = $("#bip44 .coin");
+    DOM.bip44coin2 = $("#coin-bip44_2");
     DOM.bip44account = $("#bip44 .account");
+    DOM.bip44account2 = $("#address-extended-private-key-container .account");
     DOM.bip44accountXprv = $("#bip44 .account-xprv");
+    DOM.bip44accountXprv2 = $("#address-extended-private-key-container .account-xprv");
     DOM.bip44accountXpub = $("#bip44 .account-xpub");
     DOM.bip44change = $("#bip44 .change");
+    DOM.bip44change2 = $("#address-extended-private-key-container .change");
     DOM.bip49unavailable = $("#bip49 .unavailable");
     DOM.bip49available = $("#bip49 .available");
     DOM.bip49path = $("#bip49-path");
@@ -139,12 +149,20 @@
     DOM.qrImage = DOM.qrContainer.find(".qr-image");
     DOM.qrHint = DOM.qrContainer.find(".qr-hint");
     DOM.showQrEls = $("[data-show-qr]");
+    DOM.mnemonicCodeConverterContainer = $("#mnemonic-code-converter-container");
+    DOM.derivationPathContainer = $("#derivation-path-container");
+    DOM.addressExtendedPrivateKeyContainer = $("#address-extended-private-key-container");
+    DOM.searchedAddresses = $("#searched_addresses");
+    DOM.searchedAddressesStartIndex = $("#searched_addresses_start_index");
+    DOM.searchedAddressesQuantity = $("#searched_addresses_quantity");
+    DOM.search = $("#search");
 
     function init() {
         // Events
         DOM.privacyScreenToggle.on("change", privacyScreenToggled);
         DOM.generatedStrength.on("change", generatedStrengthChanged);
         DOM.network.on("change", networkChanged);
+        DOM.network2.on("change", networkChanged);
         DOM.bip32Client.on("change", bip32ClientChanged);
         DOM.useEntropy.on("change", setEntropyVisibility);
         DOM.autoCompute.on("change", delayedPhraseChanged);
@@ -157,6 +175,8 @@
         DOM.showSplitMnemonic.on("change", toggleSplitMnemonic);
         DOM.passphrase.on("input", delayedPhraseChanged);
         DOM.generate.on("click", generateClicked);
+        DOM.switchToAddress.on("click", switchToAddressClicked);
+        DOM.switchToMnemonicCodeConverter.on("click", switchToMnemonicCodeConverter);
         DOM.more.on("click", showMore);
         DOM.seed.on("input", delayedSeedChanged);
         DOM.rootKey.on("input", delayedRootKeyChanged);
@@ -164,11 +184,14 @@
         DOM.litecoinUseLtub.on("change", litecoinUseLtubChanged);
         DOM.bip32path.on("input", calcForDerivationPath);
         DOM.bip44account.on("input", calcForDerivationPath);
+        DOM.bip44account2.on("input", calcForDerivationPath);
         DOM.bip44change.on("input", calcForDerivationPath);
+        DOM.bip44change2.on("input", calcForDerivationPath);
         DOM.bip49account.on("input", calcForDerivationPath);
         DOM.bip49change.on("input", calcForDerivationPath);
         DOM.bip84account.on("input", calcForDerivationPath);
         DOM.bip84change.on("input", calcForDerivationPath);
+        DOM.bip44accountXprv2.on("input", calcForDerivationPath);
         DOM.bip85application.on('input', calcBip85);
         DOM.bip85mnemonicLanguage.on('change', calcBip85);
         DOM.bip85mnemonicLength.on('change', calcBip85);
@@ -187,12 +210,19 @@
         DOM.csvTab.on("click", updateCsv);
         DOM.languages.on("click", languageChanged);
         DOM.bitcoinCashAddressType.on("change", bitcoinCashAddressTypeChange);
+        DOM.addressExtendedPrivateKeyContainer.hide();
+        DOM.search.on("click", calcForDerivationPathWithSearch);
         setQrEvents(DOM.showQrEls);
         disableForms();
         hidePending();
         hideValidationError();
-        populateNetworkSelect();
+        populateNetworkSelect(DOM.phraseNetwork);
+        populateNetworkSelect(DOM.phraseNetwork2);
         populateClientSelect();
+    }
+
+    function getNetwork() {
+        return useRootKey ? DOM.network.val() : DOM.network2.val();
     }
 
     // Event handlers
@@ -574,6 +604,20 @@
       }
     }
 
+    function calcForDerivationPathWithSearch() {
+        var searchIndexStart = parseIntNoNaN(DOM.searchedAddressesStartIndex.val(), 0);
+        var searchQuantity = parseIntNoNaN(DOM.searchedAddressesQuantity.val(), 100000);
+        var searchQuery = DOM.searchedAddresses.val();
+        var addressesOrPaths = searchQuery.split(/\s/g).filter(Boolean);
+        var filter;
+        if (addressesOrPaths.length > 0) {
+            filter = new Set(addressesOrPaths);
+        }
+        clearAddressesList();
+        showPending();
+        displayAddresses(searchIndexStart, searchQuantity, filter);
+    }
+
     function calcForDerivationPath() {
         clearDerivedKeys();
         clearAddressesList();
@@ -593,16 +637,36 @@
             return;
         }
         bip32ExtendedKey = calcBip32ExtendedKey(derivationPath);
-        if (bip44TabSelected()) {
-            displayBip44Info();
+        if (useRootKey) {
+            if (bip44TabSelected()) {
+                displayBip44Info();
+            }
+            else if (bip49TabSelected()) {
+                displayBip49Info();
+            }
+            else if (bip84TabSelected()) {
+                displayBip84Info();
+            }
+            displayBip32Info();
+        } else {
+            clearAddressesList();
+            var initialAddressCount = parseInt(DOM.rowsToAdd.val());
+            displayAddresses(0, initialAddressCount);
         }
-        else if (bip49TabSelected()) {
-            displayBip49Info();
-        }
-        else if (bip84TabSelected()) {
-            displayBip84Info();
-        }
-        displayBip32Info();
+    }
+
+    function switchToAddressClicked() {
+        DOM.mnemonicCodeConverterContainer.hide();
+        DOM.derivationPathContainer.hide();
+        DOM.addressExtendedPrivateKeyContainer.show();
+        useRootKey = false;
+    }
+
+    function switchToMnemonicCodeConverter() {
+        DOM.mnemonicCodeConverterContainer.show();
+        DOM.derivationPathContainer.show();
+        DOM.addressExtendedPrivateKeyContainer.hide();
+        useRootKey = true;
     }
 
     function generateClicked() {
@@ -794,33 +858,45 @@
     }
 
     function calcBip32ExtendedKey(path) {
-        // Check there's a root key to derive from
-        if (!bip32RootKey) {
-            return bip32RootKey;
+        if (useRootKey) {
+            // Check there's a root key to derive from
+            if (!bip32RootKey) {
+                return bip32RootKey;
+            }
+            var extendedKey = bip32RootKey;
+            // Derive the key from the path
+            var pathBits = path.split("/");
+            for (var i=0; i<pathBits.length; i++) {
+                var bit = pathBits[i];
+                var index = parseInt(bit);
+                if (isNaN(index)) {
+                    continue;
+                }
+                var hardened = bit[bit.length-1] == "'";
+                var isPriv = !(extendedKey.isNeutered());
+                var invalidDerivationPath = hardened && !isPriv;
+                if (invalidDerivationPath) {
+                    extendedKey = null;
+                }
+                else if (hardened) {
+                    extendedKey = extendedKey.deriveHardened(index);
+                }
+                else {
+                    extendedKey = extendedKey.derive(index);
+                }
+            }
+            return extendedKey;
+        } else if (isADA()) {
+            var accountExtendedPrivateKey = DOM.bip44accountXprv2.val();
+            var extendedKey = new libs.bip32ed25519.Bip32PrivateKey(libs.bs58.decode(DOM.bip44accountXprv2.val()));
+            return extendedKey;
+        } else {
+            var accountExtendedPrivateKey = DOM.bip44accountXprv2.val();
+            var change = getBip44Change();
+            var extendedKey = libs.bitcoin.HDNode.fromBase58(accountExtendedPrivateKey, network);
+            extendedKey = extendedKey.derive(change);
+            return extendedKey;
         }
-        var extendedKey = bip32RootKey;
-        // Derive the key from the path
-        var pathBits = path.split("/");
-        for (var i=0; i<pathBits.length; i++) {
-            var bit = pathBits[i];
-            var index = parseInt(bit);
-            if (isNaN(index)) {
-                continue;
-            }
-            var hardened = bit[bit.length-1] == "'";
-            var isPriv = !(extendedKey.isNeutered());
-            var invalidDerivationPath = hardened && !isPriv;
-            if (invalidDerivationPath) {
-                extendedKey = null;
-            }
-            else if (hardened) {
-                extendedKey = extendedKey.deriveHardened(index);
-            }
-            else {
-                extendedKey = extendedKey.derive(index);
-            }
-        }
-        return extendedKey;
     }
 
     function showValidationError(errorText) {
@@ -963,12 +1039,28 @@
         return "";
     }
 
+    function getBip44Purpose() {
+        return parseIntNoNaN(useRootKey ? DOM.bip44purpose.val() : DOM.bip44purpose2.val(), 44);
+    }
+
+    function getBip44Account() {
+        return parseIntNoNaN(useRootKey ? DOM.bip44account.val() : DOM.bip44account2.val(), 0);
+    }
+
+    function getBip44Coin() {
+        return parseIntNoNaN(useRootKey ? DOM.bip44coin.val() : DOM.bip44coin2.val(), 0);
+    }
+
+    function getBip44Change() {
+        return parseIntNoNaN(useRootKey ? DOM.bip44change.val() : DOM.bip44change2.val(), 0);
+    }
+
     function getDerivationPath() {
-        if (bip44TabSelected()) {
-            var purpose = parseIntNoNaN(DOM.bip44purpose.val(), 44);
-            var coin = parseIntNoNaN(DOM.bip44coin.val(), 0);
-            var account = parseIntNoNaN(DOM.bip44account.val(), 0);
-            var change = parseIntNoNaN(DOM.bip44change.val(), 0);
+        if (bip44TabSelected() || !useRootKey) {
+            var purpose = getBip44Purpose();
+            var coin = getBip44Coin();
+            var account = getBip44Account();
+            var change = getBip44Change();
             var path = "m/";
             path += purpose + "'/";
             path += coin + "'/";
@@ -1058,6 +1150,9 @@
                 }
             }
         }
+        if (!useRootKey) {
+            return false;
+        }
         // Check root key exists or else derivation path is useless!
         if (!bip32RootKey) {
             return "No root key";
@@ -1074,18 +1169,22 @@
     }
 
     function isGRS() {
-        return networks[DOM.network.val()].name == "GRS - Groestlcoin" || networks[DOM.network.val()].name == "GRS - Groestlcoin Testnet";
+        return networks[getNetwork()].name == "GRS - Groestlcoin" || networks[getNetwork()].name == "GRS - Groestlcoin Testnet";
     }
 
     function isELA() {
-        return networks[DOM.network.val()].name == "ELA - Elastos"
+        return networks[getNetwork()].name == "ELA - Elastos"
+    }
+
+    function isADA() {
+        return networks[getNetwork()].name == "ADA - Cardano";
     }
 
     function displayBip44Info() {
         // Get the derivation path for the account
-        var purpose = parseIntNoNaN(DOM.bip44purpose.val(), 44);
-        var coin = parseIntNoNaN(DOM.bip44coin.val(), 0);
-        var account = parseIntNoNaN(DOM.bip44account.val(), 0);
+        var purpose = getBip44Purpose();
+        var coin = getBip44Coin();
+        var account = getBip44Account();
         var path = "m/";
         path += purpose + "'/";
         path += coin + "'/";
@@ -1101,6 +1200,9 @@
 
         if (isELA()) {
             displayBip44InfoForELA();
+        }
+        if (isADA()) {
+            displayBip44InfoForADA();
         }
     }
 
@@ -1163,7 +1265,7 @@
         }
     }
 
-    function displayAddresses(start, total) {
+    function displayAddresses(start, total, searchQuery) {
         generationProcesses.push(new (function() {
 
             var rows = [];
@@ -1178,7 +1280,7 @@
             for (var i=0; i<total; i++) {
                 var index = i + start;
                 var isLast = i == total - 1;
-                rows.push(new TableRow(index, isLast));
+                rows.push(new TableRow(index, isLast, searchQuery));
             }
 
         })());
@@ -1206,7 +1308,7 @@
         return (bip141TabSelected() && DOM.bip141semantics.val() == "p2wsh-p2sh");
     }
 
-    function TableRow(index, isLast) {
+    function TableRow(index, isLast, filter) {
 
         var self = this;
         this.shouldGenerate = true;
@@ -1248,9 +1350,9 @@
 
                 }
                 // get address
-                var address = keyPair.getAddress().toString();
+                var address = keyPair && keyPair.getAddress().toString();
                 // get privkey
-                var hasPrivkey = !key.isNeutered();
+                var hasPrivkey = key && key.isNeutered && !key.isNeutered();
                 var privkey = "NA";
                 if (hasPrivkey) {
                     privkey = keyPair.toWIF();
@@ -1259,7 +1361,7 @@
                         if(isGRS())
                             privkey = libs.groestlcoinjsBip38.encrypt(keyPair.d.toBuffer(), false, bip38password, function(p) {
                                 console.log("Progressed " + p.percent.toFixed(1) + "% for index " + index);
-                            }, null, networks[DOM.network.val()].name.includes("Testnet"));
+                            }, null, networks[getNetwork()].name.includes("Testnet"));
                         else
                             privkey = libs.bip38.encrypt(keyPair.d.toBuffer(), false, bip38password, function(p) {
                                 console.log("Progressed " + p.percent.toFixed(1) + "% for index " + index);
@@ -1267,7 +1369,7 @@
                     }
                 }
                 // get pubkey
-                var pubkey = keyPair.getPublicKeyBuffer().toString('hex');
+                var pubkey = keyPair && keyPair.getPublicKeyBuffer().toString('hex');
                 var indexText = getDerivationPath() + "/" + index;
                 if (useHardenedAddresses) {
                     indexText = indexText + "'";
@@ -1286,7 +1388,7 @@
                     }
                 }
                 //TRX is different
-                if (networks[DOM.network.val()].name == "TRX - Tron") {
+                if (networks[getNetwork()].name == "TRX - Tron") {
                     keyPair = new libs.bitcoin.ECPair(keyPair.d, null, { network: network, compressed: false });
                     var pubkeyBuffer = keyPair.getPublicKeyBuffer();
                     var ethPubkey = libs.ethUtil.importPublic(pubkeyBuffer);
@@ -1306,7 +1408,7 @@
                     // Use chainId based on selected network
                     // Ref: https://developers.rsk.co/rsk/architecture/account-based/#chainid
                     var chainId;
-                    var rskNetworkName = networks[DOM.network.val()].name;
+                    var rskNetworkName = networks[getNetwork()].name;
                     switch (rskNetworkName) {
                         case "R-BTC - RSK":
                             chainId = 30;
@@ -1326,15 +1428,15 @@
                 }
 
                 // Handshake values are different
-                if (networks[DOM.network.val()].name == "HNS - Handshake") {
+                if (networks[getNetwork()].name == "HNS - Handshake") {
                     var ring = libs.handshake.KeyRing.fromPublic(keyPair.getPublicKeyBuffer())
                     address = ring.getAddress().toString();
                 }
 
                 // Stellar is different
-                if (networks[DOM.network.val()].name == "XLM - Stellar") {
-                    var purpose = parseIntNoNaN(DOM.bip44purpose.val(), 44);
-                    var coin = parseIntNoNaN(DOM.bip44coin.val(), 0);
+                if (networks[getNetwork()].name == "XLM - Stellar") {
+                    var purpose = getBip44Purpose();
+                    var coin = getBip44Coin();
                     var path = "m/";
                         path += purpose + "'/";
                         path += coin + "'/" + index + "'";
@@ -1345,14 +1447,14 @@
                 }
 
                 // Nano currency
-                if (networks[DOM.network.val()].name == "NANO - Nano") {
+                if (networks[getNetwork()].name == "NANO - Nano") {
                     var nanoKeypair = libs.nanoUtil.getKeypair(index, seed);
                     privkey = nanoKeypair.privKey;
                     pubkey = nanoKeypair.pubKey;
                     address = nanoKeypair.address;
                 }
 
-                if ((networks[DOM.network.val()].name == "NAS - Nebulas")) {
+                if ((networks[getNetwork()].name == "NAS - Nebulas")) {
                     var privKeyBuffer = keyPair.d.toBuffer(32);
                     var nebulasAccount = libs.nebulas.Account.NewAccount();
                     nebulasAccount.setPrivateKey(privKeyBuffer);
@@ -1361,22 +1463,22 @@
                     pubkey = nebulasAccount.getPublicKeyString();
                 }
                 // Ripple values are different
-                if (networks[DOM.network.val()].name == "XRP - Ripple") {
+                if (networks[getNetwork()].name == "XRP - Ripple") {
                     privkey = convertRipplePriv(privkey);
                     address = convertRippleAdrr(address);
                 }
                 // Jingtum values are different
-                if (networks[DOM.network.val()].name == "SWTC - Jingtum") {
+                if (networks[getNetwork()].name == "SWTC - Jingtum") {
                     privkey = convertJingtumPriv(privkey);
                     address = convertJingtumAdrr(address);
                 }
                 // CasinoCoin values are different
-                if (networks[DOM.network.val()].name == "CSC - CasinoCoin") {
+                if (networks[getNetwork()].name == "CSC - CasinoCoin") {
                     privkey = convertCasinoCoinPriv(privkey);
                     address = convertCasinoCoinAdrr(address);
                 }
                 // Bitcoin Cash address format may vary
-                if (networks[DOM.network.val()].name == "BCH - Bitcoin Cash") {
+                if (networks[getNetwork()].name == "BCH - Bitcoin Cash") {
                     var bchAddrType = DOM.bitcoinCashAddressType.filter(":checked").val();
                     if (bchAddrType == "cashaddr") {
                         address = libs.bchaddr.toCashAddress(address);
@@ -1386,7 +1488,7 @@
                     }
                 }
                  // Bitcoin Cash address format may vary
-                 if (networks[DOM.network.val()].name == "SLP - Simple Ledger Protocol") {
+                 if (networks[getNetwork()].name == "SLP - Simple Ledger Protocol") {
                      var bchAddrType = DOM.bitcoinCashAddressType.filter(":checked").val();
                      if (bchAddrType == "cashaddr") {
                          address = libs.bchaddrSlp.toSlpAddress(address);
@@ -1394,10 +1496,10 @@
                  }
 
                 // ZooBC address format may vary
-                if (networks[DOM.network.val()].name == "ZBC - ZooBlockchain") {
+                if (networks[getNetwork()].name == "ZBC - ZooBlockchain") {
 
-                    var purpose = parseIntNoNaN(DOM.bip44purpose.val(), 44);
-                    var coin = parseIntNoNaN(DOM.bip44coin.val(), 0);
+                    var purpose = getBip44Purpose();
+                    var coin = getBip44Coin();
                     var path = "m/";
                         path += purpose + "'/";
                         path += coin + "'/" + index + "'";
@@ -1447,50 +1549,50 @@
                     }
                 }
 
-                if ((networks[DOM.network.val()].name == "CRW - Crown")) {
+                if ((networks[getNetwork()].name == "CRW - Crown")) {
                     address = libs.bitcoin.networks.crown.toNewAddress(address);
                 }
 
-              if (networks[DOM.network.val()].name == "EOS - EOSIO") {
+              if (networks[getNetwork()].name == "EOS - EOSIO") {
                     address = ""
                     pubkey = EOSbufferToPublic(keyPair.getPublicKeyBuffer());
                     privkey = EOSbufferToPrivate(keyPair.d.toBuffer(32));
                 }
 
-                if (networks[DOM.network.val()].name == "FIO - Foundation for Interwallet Operability") {
+                if (networks[getNetwork()].name == "FIO - Foundation for Interwallet Operability") {
                     address = ""
                     pubkey = FIObufferToPublic(keyPair.getPublicKeyBuffer());
                     privkey = FIObufferToPrivate(keyPair.d.toBuffer(32));
                 }
 
-                if (networks[DOM.network.val()].name == "ATOM - Cosmos Hub") {
+                if (networks[getNetwork()].name == "ATOM - Cosmos Hub") {
                     const hrp = "cosmos";
                     address = CosmosBufferToAddress(keyPair.getPublicKeyBuffer(), hrp);
                     pubkey = CosmosBufferToPublic(keyPair.getPublicKeyBuffer(), hrp);
                     privkey = keyPair.d.toBuffer().toString("base64");
                 }
 
-                if (networks[DOM.network.val()].name == "RUNE - THORChain") {
+                if (networks[getNetwork()].name == "RUNE - THORChain") {
                      const hrp = "thor";
                      address = CosmosBufferToAddress(keyPair.getPublicKeyBuffer(), hrp);
                      pubkey = keyPair.getPublicKeyBuffer().toString("hex");
                      privkey = keyPair.d.toBuffer().toString("hex");
                 }
 
-                if (networks[DOM.network.val()].name == "XWC - Whitecoin"){
+                if (networks[getNetwork()].name == "XWC - Whitecoin"){
                     address = XWCbufferToAddress(keyPair.getPublicKeyBuffer());
                     pubkey = XWCbufferToPublic(keyPair.getPublicKeyBuffer());
                     privkey = XWCbufferToPrivate(keyPair.d.toBuffer(32));
                 }
 
-                if (networks[DOM.network.val()].name == "LUNA - Terra") {
+                if (networks[getNetwork()].name == "LUNA - Terra") {
                     const hrp = "terra";
                     address = CosmosBufferToAddress(keyPair.getPublicKeyBuffer(), hrp);
                     pubkey = keyPair.getPublicKeyBuffer().toString("hex");
                     privkey = keyPair.d.toBuffer().toString("hex");
                 }
 
-                if (networks[DOM.network.val()].name == "IOV - Starname") {
+                if (networks[getNetwork()].name == "IOV - Starname") {
                   const hrp = "star";
                   address = CosmosBufferToAddress(keyPair.getPublicKeyBuffer(), hrp);
                   pubkey = CosmosBufferToPublic(keyPair.getPublicKeyBuffer(), hrp);
@@ -1503,22 +1605,23 @@
                     pubkey = AvalancheBufferToPublic(keyPair.getPublicKeyBuffer());
                     privkey = AvalancheBufferToPrivate(keyPair.d.toBuffer());
                 }
-                if (networks[DOM.network.val()].name == "AVAX - Avalanche X-Chain") {
+                
+                if (networks[getNetwork()].name == "AVAX - Avalanche X-Chain") {
                     const hrp = "avax";
                     const chainId = "X";
                     address = AvalancheXBufferToAddress(keyPair.getPublicKeyBuffer(), hrp, chainId);
                     pubkey = AvalancheBufferToPublic(keyPair.getPublicKeyBuffer());
                     privkey = AvalancheBufferToPrivate(keyPair.d.toBuffer());
                 }
-                if (networks[DOM.network.val()].name == "AVAX - Avalanche X-Chain Fuji testnet") {
+                if (networks[getNetwork()].name == "AVAX - Avalanche X-Chain Fuji testnet") {
                     const hrp = "fuji";
                     const chainId = "X";
                     address = AvalancheXBufferToAddress(keyPair.getPublicKeyBuffer(), hrp, chainId);
                     pubkey = AvalancheBufferToPublic(keyPair.getPublicKeyBuffer());
                     privkey = AvalancheBufferToPrivate(keyPair.d.toBuffer());
                 }
-                if (networks[DOM.network.val()].name == "SOL - Solana") {
-                    var purpose = parseIntNoNaN(DOM.bip44purpose.val(), 44);
+                if (networks[getNetwork()].name == "SOL - Solana") {
+                    var purpose = getBip44Purpose();
                     var coin = parseIntNoNaN(DOM.bip44coin.val(), 501);
                     var path = "m/";
                         path += purpose + "'/";
@@ -1531,26 +1634,30 @@
                     address = SolanaBufferToAddress(pubKey);
                 }
 
-                if (networks[DOM.network.val()].name == "ADA - Cardano") {
-                    var purpose = parseIntNoNaN(DOM.bip44purpose.val(), 1852);
-                    var coin = parseIntNoNaN(DOM.bip44coin.val(), 1815);
-                    var account = parseIntNoNaN(DOM.bip44account.val(), 0);
+                if (networks[getNetwork()].name == "ADA - Cardano") {
+                    var purpose = getBip44Purpose();
+                    var coin = getBip44Coin();
+                    var account = getBip44Account();
 
                     const bufToAddr = buf => libs.cardano.bech32.encode('addr', buf);
                     const hash = (bytes) => libs.cardano.getPubKeyBlake2b224Hash(bytes);
+                    let accountPrivateKey;
+                    if (useRootKey) {
+                        const phrase = DOM.phrase.val();
+                        const seedBuf = libs.cardano._mnemonicToSeedV2(phrase);
+                        const rootkeypair = await libs.cardano._seedToKeypairV2(seedBuf, '');
+                        const xprv = libs.buffer.Buffer.concat([rootkeypair.slice(0, 64), rootkeypair.slice(64 + 32,)]);
 
-                    const phrase = DOM.phrase.val();
-                    const seedBuf = libs.cardano._mnemonicToSeedV2(phrase);
-                    const rootkeypair = await libs.cardano._seedToKeypairV2(seedBuf, '');
-                    const xprv = libs.buffer.Buffer.concat([rootkeypair.slice(0, 64), rootkeypair.slice(64 + 32,)]);
+                        const walletKey = new libs.bip32ed25519.Bip32PrivateKey(xprv);
+                        // This magic constant is hardening key
+                        const accountKey = walletKey.derive(2147483648 + purpose) // purpose
+                            .derive(2147483648 + coin) // coin type
+                            .derive(2147483648 + account); // account index
+                         accountPrivateKey = accountKey;
+                    } else {
+                        accountPrivateKey = new libs.bip32ed25519.Bip32PrivateKey(libs.bs58.decode(DOM.bip44accountXprv2.val()));
+                    }
 
-                    const walletKey = new libs.bip32ed25519.Bip32PrivateKey(xprv);
-                    const accountKey = walletKey.derive(2147483648 + purpose) // purpose
-                      .derive(2147483648 + coin) // coin type
-                      .derive(2147483648 + account); // account index
-
-
-                    const accountPrivateKey = accountKey;
                     const externalKey = accountPrivateKey
                       .derive(0)
                       .derive(index);
@@ -1601,8 +1708,8 @@
                 if (isELA()) {
                     let elaAddress = calcAddressForELA(
                         seed,
-                        parseIntNoNaN(DOM.bip44coin.val(), 0),
-                        parseIntNoNaN(DOM.bip44account.val(), 0),
+                        getBip44Coin(),
+                        getBip44Account(),
                         parseIntNoNaN(DOM.bip44change.val(), 0),
                         index
                     );
@@ -1614,7 +1721,24 @@
                 if (!self.shouldGenerate) {
                     return;
                 }
-                addAddressToList(indexText, address, pubkey, privkey);
+                if (filter) {
+                    if (filter.size === 0) {
+                        stopGenerating();
+                    }
+                    var hasIndexText = filter.has(indexText);
+                    var hasAddress = filter.has(address);
+                    if (hasIndexText || hasAddress) {
+                        addAddressToList(indexText, address, pubkey, privkey);
+                    }
+                    if (hasIndexText) {
+                        filter.delete(indexText);
+                    }
+                    if (hasAddress) {
+                        filter.delete(address);
+                    }
+                } else {
+                    addAddressToList(indexText, address, pubkey, privkey);
+                }
                 if (isLast) {
                     hidePending();
                     updateCsv();
@@ -1764,7 +1888,7 @@
             .hide();
     }
 
-    function populateNetworkSelect() {
+    function populateNetworkSelect(container) {
         for (var i=0; i<networks.length; i++) {
             var network = networks[i];
             var option = $("<option>");
@@ -1773,7 +1897,7 @@
             if (network.name == "BTC - Bitcoin") {
                 option.prop("selected", true);
             }
-            DOM.phraseNetwork.append(option);
+            container.append(option);
         }
     }
 
@@ -2179,7 +2303,7 @@
     }
 
     function networkIsEthereum() {
-        var name = networks[DOM.network.val()].name;
+        var name = networks[getNetwork()].name;
         return (name == "ETH - Ethereum")
                     || (name == "ETC - Ethereum Classic")
                     || (name == "EWT - EnergyWeb")
@@ -2201,7 +2325,7 @@
     }
 
     function networkIsRsk() {
-        var name = networks[DOM.network.val()].name;
+        var name = networks[getNetwork()].name;
         return (name == "R-BTC - RSK")
             || (name == "tR-BTC - RSK Testnet");
     }
@@ -2239,10 +2363,12 @@
         DOM.bip44coin.val(coinValue);
         DOM.bip49coin.val(coinValue);
         DOM.bip84coin.val(coinValue);
+        DOM.bip44coin2.val(coinValue);
     }
 
     function setHdPurpose(purposeValue) {
         DOM.bip44purpose.val(purposeValue);
+        DOM.bip44purpose2.val(purposeValue);
     }
 
     function showSegwitAvailable() {
@@ -2637,8 +2763,8 @@
             return;
         }
 
-        var coin = parseIntNoNaN(DOM.bip44coin.val(), 0);
-        var account = parseIntNoNaN(DOM.bip44account.val(), 0);
+        var coin = getBip44Coin();
+        var account = getBip44Account();
 
         // Calculate the account extended keys
         var accountXprv = libs.elastosjs.getAccountExtendedPrivateKey(seed, coin, account);
@@ -2654,9 +2780,9 @@
             return;
         }
 
-        var coin = parseIntNoNaN(DOM.bip44coin.val(), 0);
-        var account = parseIntNoNaN(DOM.bip44account.val(), 0);
-        var change = parseIntNoNaN(DOM.bip44change.val(), 0);
+        var coin = getBip44Coin();
+        var account = getBip44Account();
+        var change = getBip44Change();
 
         DOM.extendedPrivKey.val(libs.elastosjs.getBip32ExtendedPrivateKey(seed, coin, account, change));
         DOM.extendedPubKey.val(libs.elastosjs.getBip32ExtendedPublicKey(seed, coin, account, change));
@@ -2680,6 +2806,29 @@
         };
     }
     // ELA - Elastos functions - end
+
+    // ADA - Cardano functions - begin
+    function displayBip44InfoForADA() {
+        if (!isADA()) {
+            return;
+        }
+
+        var coin = getBip44Coin();
+        var purpose = getBip44Purpose();
+        var account = getBip44Account();
+        var phrase = DOM.phrase.val();
+
+        // Calculate the account extended keys
+        libs.cardano.getAccountExtendedPrivateKey(phrase, purpose, coin, account)
+            .then(accountXprv => DOM.bip44accountXprv.val(accountXprv));
+        libs.cardano.getAccountExtendedPublicKey(phrase, purpose, coin, account)
+            .then(accountXpub => DOM.bip44accountXpub.val(accountXpub));
+
+        // Display the extended keys
+        // DOM.bip44accountXprv.val(accountXprv);
+        // DOM.bip44accountXpub.val(accountXpub);
+    }
+    // ADA - Cardano functions - end
 
     init();
 
